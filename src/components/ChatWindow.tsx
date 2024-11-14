@@ -21,25 +21,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const socket = io("http://127.0.0.1:5000");
 
   useEffect(() => {
-    socket.emit("joinChat", { chatId });
+    if (!chatId) return;
+
     const loadMessages = async () => {
-      if (chatId) {
-        const data = await fetchMessagesByChatId(chatId);
-        setMessages(data);
-        console.log(data);
-      }
+      const data = await fetchMessagesByChatId(chatId);
+      setMessages(data);
+      console.log(data);
     };
     loadMessages();
-    console.log(messages);
-    // Listen for real-time messages from the server
 
-    socket.on("messageReceived", (msg) => {
+    // Listen for real-time messages from the server
+    const handleMessageReceived = (msg) => {
       console.log(msg);
       setMessages((prevMessages) => [...prevMessages, msg]);
-    });
+    };
+
+    socket.on(`messageReceived::${chatId}`, handleMessageReceived);
 
     return () => {
-      socket.off("messageReceived"); // Clean up the listener on component unmount
+      socket.off(`messageReceived::${chatId}`, handleMessageReceived); // Clean up the listener
     };
   }, [chatId]);
 
